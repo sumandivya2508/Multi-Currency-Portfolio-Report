@@ -18,9 +18,7 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    /**
-     * Create BUY / SELL transaction
-     */
+
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(
             @Valid @RequestBody TransactionRequest request,
@@ -35,9 +33,6 @@ public class TransactionController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Get transaction history for a portfolio
-     */
     @GetMapping("/portfolio/{portfolioId}")
     public ResponseEntity<List<TransactionResponse>> getTransactionHistory(
             @PathVariable Long portfolioId,

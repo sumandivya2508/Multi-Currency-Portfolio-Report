@@ -15,8 +15,7 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration}")
-    private long expiration;
+
 
     private SecretKey secretKey;
 
@@ -28,15 +27,14 @@ public class JwtTokenProvider {
 
     public String generateToken(String username) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(secretKey, SignatureAlgorithm.HS256) // ✅ CHANGED
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
+
 
     public String getUsernameFromToken(String token) {
         return Jwts.parserBuilder()
