@@ -1,4 +1,4 @@
-package DTO_Response;
+package Portfolio.example.Portfolio.DTO_Response;
 
 
 import lombok.AllArgsConstructor;

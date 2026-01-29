@@ -1,4 +1,4 @@
-package Exceptions;
+package Portfolio.example.Portfolio.Exceptions;
 
 
 public class ResourceNotFoundException extends RuntimeException {

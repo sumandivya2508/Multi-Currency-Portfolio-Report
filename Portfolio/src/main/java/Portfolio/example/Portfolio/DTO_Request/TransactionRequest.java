@@ -1,4 +1,4 @@
-package DTO_Request;
+package Portfolio.example.Portfolio.DTO_Request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;

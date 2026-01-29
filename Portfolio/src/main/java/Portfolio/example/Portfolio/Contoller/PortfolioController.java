@@ -1,9 +1,9 @@
-package Contoller;
+package Portfolio.example.Portfolio.Contoller;
 
 
-import DTO_Request.PortfolioRequest;
-import DTO_Response.PortfolioResponse;
-import Service.PortfolioService;
+import Portfolio.example.Portfolio.DTO_Request.PortfolioRequest;
+import Portfolio.example.Portfolio.DTO_Response.PortfolioResponse;
+import Portfolio.example.Portfolio.Service.PortfolioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

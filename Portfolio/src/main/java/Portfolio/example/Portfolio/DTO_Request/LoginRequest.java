@@ -1,4 +1,4 @@
-package DTO_Request;
+package Portfolio.example.Portfolio.DTO_Request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

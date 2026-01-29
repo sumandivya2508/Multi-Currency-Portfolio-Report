@@ -1,4 +1,4 @@
-package Exceptions;
+package Portfolio.example.Portfolio.Exceptions;
 
 import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;

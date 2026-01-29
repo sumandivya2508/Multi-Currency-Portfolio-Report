@@ -1,4 +1,4 @@
-package Entity;
+package Portfolio.example.Portfolio.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;

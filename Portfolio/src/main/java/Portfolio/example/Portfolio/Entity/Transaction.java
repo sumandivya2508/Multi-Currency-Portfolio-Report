@@ -1,25 +1,30 @@
-package Entity;
+package Portfolio.example.Portfolio.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "transactions", indexes = {
+@Table(
+    name = "transactions",
+    indexes = {
         @Index(name = "idx_portfolio_date", columnList = "portfolio_id,transaction_date"),
         @Index(name = "idx_ticker", columnList = "ticker")
-})
+    }
+)
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Transaction {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -56,7 +61,7 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private TransactionStatus status = TransactionStatus.COMPLETED;
+    private TransactionStatus status = TransactionStatus.COMMITTED;
 
     @Column(length = 500)
     private String errorMessage;
@@ -65,4 +70,3 @@ public class Transaction {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }
-

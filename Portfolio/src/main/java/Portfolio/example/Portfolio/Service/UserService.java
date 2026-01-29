@@ -1,19 +1,16 @@
-package Service;
+package Portfolio.example.Portfolio.Service;
 
-import DTO_Request.RegisterRequest;
-import Entity.User;
-import Entity.UserRole;
-import Exceptions.ResourceNotFoundException;
-import Repository.UserRepository;
+import Portfolio.example.Portfolio.DTO_Request.RegisterRequest;
+import Portfolio.example.Portfolio.Entity.User;
+import Portfolio.example.Portfolio.Entity.UserRole;
+import Portfolio.example.Portfolio.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -21,29 +18,29 @@ public class UserService {
 
     @Transactional
     public User registerUser(RegisterRequest request) {
+
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("Username already exists");
         }
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
         }
 
         User user = User.builder()
                 .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(passwordEncoder.encode(request.getPassword())) // 🔥 ENCODE
                 .email(request.getEmail())
                 .fullName(request.getFullName())
-                .role(UserRole.TRADER)
+                .role(UserRole.ROLE_USER) // 🔥 FIX
                 .enabled(true)
                 .build();
 
-        User savedUser = userRepository.save(user);
-        log.info("User registered successfully: {}", savedUser.getUsername());
-        return savedUser;
+        return userRepository.save(user);
     }
 
     public User findByUsername(String username) {
-        return UserRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

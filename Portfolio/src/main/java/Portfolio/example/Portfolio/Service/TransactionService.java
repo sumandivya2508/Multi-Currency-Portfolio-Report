@@ -1,20 +1,20 @@
-package Service;
-import DTO_Request.TransactionRequest;
-import DTO_Response.PositionResponse;
-import DTO_Response.ReportResponse;
-import DTO_Response.TransactionResponse;
-import Entity.*;
-import Exceptions.InsufficientSharesException;
-import Repository.PositionRepository;
-import Repository.TransactionRepository;
+package Portfolio.example.Portfolio.Service;
+
+import Portfolio.example.Portfolio.DTO_Request.TransactionRequest;
+import Portfolio.example.Portfolio.DTO_Response.PositionResponse;
+import Portfolio.example.Portfolio.DTO_Response.ReportResponse;
+import Portfolio.example.Portfolio.DTO_Response.TransactionResponse;
+import Portfolio.example.Portfolio.Entity.*;
+import Portfolio.example.Portfolio.Exceptions.InsufficientSharesException;
+import Portfolio.example.Portfolio.Repository.PositionRepository;
+import Portfolio.example.Portfolio.Repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +30,10 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse processTransaction(String username, TransactionRequest request) {
-        Portfolio portfolio = portfolioService.findById(request.getPortfolioId(), username);
+
+        Portfolio portfolio = portfolioService.findById(
+                request.getPortfolioId(), username
+        );
 
         BigDecimal exchangeRate = exchangeService.getExchangeRate(
                 request.getCurrency(),
@@ -39,7 +42,9 @@ public class TransactionService {
 
         BigDecimal localAmount = request.getLocalPrice()
                 .multiply(BigDecimal.valueOf(request.getQuantity()));
-        BigDecimal usdAmount = localAmount.multiply(exchangeRate)
+
+        BigDecimal usdAmount = localAmount
+                .multiply(exchangeRate)
                 .setScale(2, RoundingMode.HALF_UP);
 
         Transaction transaction = Transaction.builder()
@@ -52,7 +57,7 @@ public class TransactionService {
                 .currency(request.getCurrency().toUpperCase())
                 .exchangeRate(exchangeRate)
                 .usdAmount(usdAmount)
-                .status(TransactionStatus.PENDING)
+                .status(TransactionStatus.ROLLED_BACK)
                 .build();
 
         try {
@@ -62,15 +67,11 @@ public class TransactionService {
                 processSell(portfolio, transaction);
             }
 
-            transaction.setStatus(TransactionStatus.COMPLETED);
-            log.info("{} transaction completed: {} shares of {} for ${}",
-                    transaction.getType(), transaction.getQuantity(),
-                    transaction.getTicker(), usdAmount);
+            transaction.setStatus(TransactionStatus.COMMITTED);
 
         } catch (InsufficientSharesException e) {
-            transaction.setStatus(TransactionStatus.REJECTED);
             transaction.setErrorMessage(e.getMessage());
-            log.error("Transaction rejected: {}", e.getMessage());
+            log.error("Transaction failed: {}", e.getMessage());
             throw e;
         }
 
@@ -79,14 +80,19 @@ public class TransactionService {
     }
 
     private void processBuy(Portfolio portfolio, Transaction transaction) {
+
         Position position = positionRepository
-                .findByPortfolioIdAndTicker(portfolio.getId(), transaction.getTicker())
+                .findByPortfolioIdAndTicker(
+                        portfolio.getId(),
+                        transaction.getTicker()
+                )
                 .orElseGet(() -> Position.builder()
                         .portfolio(portfolio)
                         .ticker(transaction.getTicker())
                         .shares(0)
                         .totalUSDInvestment(BigDecimal.ZERO)
-                        .build());
+                        .build()
+                );
 
         position.setShares(position.getShares() + transaction.getQuantity());
         position.setTotalUSDInvestment(
@@ -98,21 +104,26 @@ public class TransactionService {
     }
 
     private void processSell(Portfolio portfolio, Transaction transaction) {
+
         Position position = positionRepository
-                .findByPortfolioIdAndTicker(portfolio.getId(), transaction.getTicker())
-                .orElseThrow(() -> new InsufficientSharesException(
-                        "No position found for " + transaction.getTicker()));
+                .findByPortfolioIdAndTicker(
+                        portfolio.getId(),
+                        transaction.getTicker()
+                )
+                .orElseThrow(() ->
+                        new InsufficientSharesException("No position found")
+                );
 
         if (position.getShares() < transaction.getQuantity()) {
-            throw new InsufficientSharesException(
-                    String.format("Insufficient shares: tried to sell %d but only %d available for %s",
-                            transaction.getQuantity(), position.getShares(), transaction.getTicker())
-            );
+            throw new InsufficientSharesException("Insufficient shares");
         }
+
+        BigDecimal sellCost = position.getAverageCostPerShare()
+                .multiply(BigDecimal.valueOf(transaction.getQuantity()));
 
         position.setShares(position.getShares() - transaction.getQuantity());
         position.setTotalUSDInvestment(
-                position.getTotalUSDInvestment().subtract(transaction.getUsdAmount())
+                position.getTotalUSDInvestment().subtract(sellCost)
         );
         position.updateAverageCost();
 
@@ -121,45 +132,42 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public ReportResponse generateReport(String username, Long portfolioId) {
+
         Portfolio portfolio = portfolioService.findById(portfolioId, username);
 
-        List<Position> activePositions = positionRepository
-                .findByPortfolioIdAndSharesGreaterThan(portfolioId, 0);
+        List<Position> activePositions =
+                positionRepository.findByPortfolioIdAndSharesGreaterThan(
+                        portfolioId, 0
+                );
 
-        List<PositionResponse> positionResponses = activePositions.stream()
-                .map(this::mapPositionToResponse)
-                .collect(Collectors.toList());
+        List<PositionResponse> positionResponses =
+                activePositions.stream()
+                        .map(this::mapPositionToResponse)
+                        .collect(Collectors.toList());
 
-        BigDecimal totalValue = activePositions.stream()
-                .map(Position::getTotalUSDInvestment)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        List<Transaction> failedTxns = transactionRepository
-                .findByPortfolioIdAndStatus(portfolioId, TransactionStatus.REJECTED);
-
-        List<String> errors = failedTxns.stream()
-                .map(Transaction::getErrorMessage)
-                .collect(Collectors.toList());
+        List<String> errors =
+                transactionRepository
+                        .findByPortfolioIdAndStatus(
+                                portfolioId,
+                                TransactionStatus.ROLLED_BACK
+                        )
+                        .stream()
+                        .map(Transaction::getErrorMessage)
+                        .collect(Collectors.toList());
 
         return ReportResponse.builder()
                 .portfolioId(portfolio.getId())
                 .portfolioName(portfolio.getName())
                 .baseCurrency(portfolio.getBaseCurrency())
                 .positions(positionResponses)
-                .totalPortfolioValue(totalValue)
+                .totalPortfolioValue(
+                        activePositions.stream()
+                                .map(Position::getTotalUSDInvestment)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                )
                 .totalActivePositions(activePositions.size())
                 .errors(errors)
                 .build();
-    }
-
-    @Transactional(readOnly = true)
-    public List<TransactionResponse> getTransactionHistory(String username, Long portfolioId) {
-        portfolioService.findById(portfolioId, username);
-
-        return transactionRepository.findByPortfolioIdOrderByTransactionDateDesc(portfolioId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
     }
 
     private TransactionResponse mapToResponse(Transaction txn) {
@@ -179,6 +187,21 @@ public class TransactionService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> getTransactionHistory(
+            String username,
+            Long portfolioId) {
+
+        Portfolio portfolio =
+                portfolioService.findById(portfolioId, username);
+
+        return transactionRepository
+                .findByPortfolioIdOrderByTransactionDateDesc(portfolio.getId())
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    
     private PositionResponse mapPositionToResponse(Position pos) {
         return PositionResponse.builder()
                 .id(pos.getId())

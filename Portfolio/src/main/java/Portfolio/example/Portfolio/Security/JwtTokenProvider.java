@@ -1,34 +1,40 @@
-package Security;
-
+package Portfolio.example.Portfolio.Security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
-@Slf4j
 public class JwtTokenProvider {
 
-    private final SecretKey secretKey;
-    private final long jwtExpirationMs = 86400000; // 24 hours
+    @Value("${jwt.secret}")
+    private String secret;
 
-    public JwtTokenProvider() {
-        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    @Value("${jwt.expiration}")
+    private long expiration;
+
+    private SecretKey secretKey;
+
+    @PostConstruct
+    public void init() {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        System.out.println("JWT key length (bits): " + (secret.getBytes().length * 8));
     }
 
     public String generateToken(String username) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+        Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(secretKey)
+                .signWith(secretKey, SignatureAlgorithm.HS256) // ✅ CHANGED
                 .compact();
     }
 
@@ -45,10 +51,8 @@ public class JwtTokenProvider {
         try {
             Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            log.error("JWT validation error: {}", e.getMessage());
+        } catch (JwtException | IllegalArgumentException ex) {
             return false;
         }
     }
 }
-

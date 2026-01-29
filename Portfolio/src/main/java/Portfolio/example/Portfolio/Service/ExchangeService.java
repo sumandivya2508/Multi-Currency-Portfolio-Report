@@ -1,8 +1,8 @@
-package Service;
+package Portfolio.example.Portfolio.Service;
 
-import Entity.Exchange;
-import Exceptions.ExchangeRateNotFoundException;
-import Repository.ExchangeRateRepository;
+import Portfolio.example.Portfolio.Entity.Exchange;
+import Portfolio.example.Portfolio.Exceptions.ExchangeRateNotFoundException;
+import Portfolio.example.Portfolio.Repository.ExchangeRateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

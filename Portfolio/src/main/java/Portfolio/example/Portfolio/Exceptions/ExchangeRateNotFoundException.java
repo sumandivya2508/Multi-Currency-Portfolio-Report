@@ -1,4 +1,4 @@
-package Exceptions;
+package Portfolio.example.Portfolio.Exceptions;
 
 public class ExchangeRateNotFoundException extends RuntimeException {
     public ExchangeRateNotFoundException(String message) {

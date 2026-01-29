@@ -1,11 +1,11 @@
-package Service;
+package Portfolio.example.Portfolio.Service;
 
-import DTO_Request.PortfolioRequest;
-import DTO_Response.PortfolioResponse;
-import Entity.Portfolio;
-import Entity.User;
-import Exceptions.ResourceNotFoundException;
-import Repository.PortfolioRepository;
+import Portfolio.example.Portfolio.DTO_Request.PortfolioRequest;
+import Portfolio.example.Portfolio.DTO_Response.PortfolioResponse;
+import Portfolio.example.Portfolio.Entity.Portfolio;
+import Portfolio.example.Portfolio.Entity.User;
+import Portfolio.example.Portfolio.Exceptions.ResourceNotFoundException;
+import Portfolio.example.Portfolio.Repository.PortfolioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,13 +1,14 @@
-package Contoller;
+package Portfolio.example.Portfolio.Contoller;
 
-import DTO_Request.TransactionRequest;
-import DTO_Response.TransactionResponse;
-import Service.TransactionService;
+import Portfolio.example.Portfolio.DTO_Request.TransactionRequest;
+import Portfolio.example.Portfolio.DTO_Response.TransactionResponse;
+import Portfolio.example.Portfolio.Service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -17,23 +18,37 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
+    /**
+     * Create BUY / SELL transaction
+     */
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(
             @Valid @RequestBody TransactionRequest request,
             Authentication authentication) {
-        TransactionResponse response = transactionService.processTransaction(
-                authentication.getName(), request
-        );
+
+        TransactionResponse response =
+                transactionService.processTransaction(
+                        authentication.getName(),
+                        request
+                );
+
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Get transaction history for a portfolio
+     */
     @GetMapping("/portfolio/{portfolioId}")
     public ResponseEntity<List<TransactionResponse>> getTransactionHistory(
             @PathVariable Long portfolioId,
             Authentication authentication) {
-        List<TransactionResponse> history = transactionService.getTransactionHistory(
-                authentication.getName(), portfolioId
-        );
+
+        List<TransactionResponse> history =
+                transactionService.getTransactionHistory(
+                        authentication.getName(),
+                        portfolioId
+                );
+
         return ResponseEntity.ok(history);
     }
 }

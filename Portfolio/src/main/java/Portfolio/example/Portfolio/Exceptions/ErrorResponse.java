@@ -1,4 +1,4 @@
-package Exceptions;
+package Portfolio.example.Portfolio.Exceptions;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
